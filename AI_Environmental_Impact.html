@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI Environmental Impact</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.6;color:#1a1a1a;background:#f7f6f3;padding:1.5rem 1rem;max-width:740px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin-bottom:.2rem}
+.sub{font-size:13px;color:#888;margin-bottom:1.5rem}
+.card{background:#fff;border:1px solid #e5e3de;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-bottom:.9rem}
+.slider-row{display:flex;align-items:center;gap:12px;margin-bottom:.7rem}
+.slider-row label{font-size:13px;color:#555;min-width:148px}
+.slider-row input[type=range]{flex:1;accent-color:#1a1a1a}
+.sv{font-size:13px;font-weight:600;min-width:56px;text-align:right}
+.spend-hint{font-size:11px;color:#aaa;margin:-0.3rem 0 .75rem;line-height:1.6;padding-left:4px}
+.spend-hint a{color:#aaa;text-decoration:underline}
+select{font-size:13px;padding:.3rem .6rem;border:1px solid #ddd;border-radius:6px;background:#fff;color:#1a1a1a;cursor:pointer}
+/* summary card */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.75rem}
+.smcard{background:#1a1a1a;border-radius:10px;padding:.9rem 1rem}
+.smcard.lite{background:#f7f6f3}
+.smcard-label{font-size:11px;color:#777;margin-bottom:.2rem}
+.smcard.lite .smcard-label{color:#999}
+.smcard-val{font-size:22px;font-weight:600;color:#fff;line-height:1.1}
+.smcard.lite .smcard-val{color:#1a1a1a}
+.smcard-unit{font-size:10px;color:#555;margin-top:.15rem}
+.smcard.lite .smcard-unit{color:#bbb}
+/* tier breakdown */
+.tier-toggle{display:flex;align-items:center;gap:8px;margin:.75rem 0 .5rem;cursor:pointer;user-select:none}
+.tier-toggle span{font-size:12px;color:#aaa;font-weight:500}
+.tier-arrow{font-size:10px;color:#ccc;transition:transform .2s}
+.tier-arrow.open{transform:rotate(90deg)}
+.tier-breakdown{display:none}
+.tier-breakdown.open{display:block}
+.tier-tabs{display:flex;gap:6px;margin-bottom:.6rem}
+.ttab{flex:1;padding:.45rem .4rem;border:1px solid #e5e3de;border-radius:8px;background:#fff;font-size:11px;font-weight:500;cursor:pointer;text-align:center;line-height:1.4}
+.ttab:hover{background:#f7f6f3}
+.ttab.active.t1{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+.ttab.active.t2{background:#fef3c7;border-color:#fbbf24;color:#92400e}
+.ttab.active.t3{background:#fee2e2;border-color:#fca5a5;color:#7f1d1d}
+.tdesc{font-size:12px;color:#888;min-height:2.4em;line-height:1.5;margin-bottom:.85rem}
+.mg3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.65rem}
+.mg2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.65rem}
+.mcard{background:#f7f6f3;border-radius:8px;padding:.75rem .9rem}
+.mcard-lbl{font-size:11px;color:#999;margin-bottom:.15rem}
+.mcard-val{font-size:18px;font-weight:600;color:#1a1a1a}
+.mcard-unit{font-size:10px;color:#bbb;margin-top:.1rem}
+.sec{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#ccc;margin:1rem 0 .55rem;padding-bottom:.3rem;border-bottom:1px solid #f0efe9}
+/* comparisons */
+.ci{display:flex;align-items:flex-start;gap:10px;padding:.5rem 0;border-bottom:1px solid #f7f6f3}
+.ci:last-child{border-bottom:none}
+.ci-icon{font-size:17px;width:22px;flex-shrink:0;margin-top:2px}
+.ci-body{flex:1}
+.ci-head{font-size:13px;font-weight:500}
+.ci-sub{font-size:12px;color:#888;margin-top:.05rem}
+.ci-alarm{font-size:12px;color:#b45309;margin-top:.18rem;font-style:italic}
+/* details/summary */
+details{margin-top:.3rem}
+details summary{font-size:11px;color:#bbb;cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:3px;user-select:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:'▶';font-size:8px;transition:transform .15s;display:inline-block}
+details[open] summary::before{transform:rotate(90deg)}
+.cb{font-size:11px;color:#777;line-height:1.7;margin-top:.4rem;padding:.65rem .85rem;background:#f7f6f3;border-radius:6px;border-left:2px solid #e5e3de}
+.cb p{margin-bottom:.45rem}.cb p:last-child{margin-bottom:0}
+.cb a{color:#6b7280;text-decoration:underline}
+.cb strong{color:#555;font-weight:600}
+/* confidence */
+.confbox{margin-top:.5rem;padding:.65rem .85rem;background:#fffbeb;border-radius:6px;border-left:2px solid #fbbf24;font-size:11px;color:#78350f;line-height:1.7}
+.confbox strong{color:#92400e}
+.cbbar-wrap{margin:.35rem 0;height:7px;background:#fde68a;border-radius:4px;overflow:hidden;position:relative}
+.cbbar-fill{height:100%;background:#f59e0b;border-radius:4px;position:absolute}
+.cblabels{display:flex;justify-content:space-between;font-size:10px;color:#b45309}
+/* banner — always present, no layout shift */
+.banner{background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:.75rem 1rem;font-size:13px;color:#78350f;margin-bottom:1rem;min-height:54px;display:flex;flex-direction:column;justify-content:center}
+.banner strong{font-weight:600;display:block;margin-bottom:.1rem}
+.banner.hidden{background:transparent;border-color:transparent;pointer-events:none}
+.banner.hidden strong,.banner.hidden span{visibility:hidden}
+/* badge */
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;letter-spacing:.04em}
+.best{background:#fef3c7;color:#92400e}
+.bspec{background:#fee2e2;color:#7f1d1d}
+/* gpt comparison table */
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px}
+.cmp-table th{font-size:11px;font-weight:600;padding:.5rem .75rem;text-align:center;border-bottom:2px solid #e5e3de}
+.cmp-table th.col-metric{text-align:left;color:#aaa;letter-spacing:.06em;text-transform:uppercase}
+.cmp-table th.col-claude{background:#fef9f0;color:#d97706;border-radius:6px 0 0 0}
+.cmp-table th.col-gpt{background:#f0fdf8;color:#10a37f;border-radius:0 6px 0 0}
+.cmp-table td{padding:.45rem .75rem;border-bottom:1px solid #f7f6f3;vertical-align:middle}
+.cmp-table td.col-metric{font-size:12px;color:#777}
+.cmp-table td.col-claude{text-align:center;font-weight:600;background:#fef9f0}
+.cmp-table td.col-gpt{text-align:center;font-weight:600;background:#f0fdf8}
+.cmp-table td.col-gpt .est{font-size:10px;color:#aaa;font-weight:400;display:block}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table tr:last-child td.col-claude{border-radius:0 0 0 6px}
+.cmp-table tr:last-child td.col-gpt{border-radius:0 0 6px 0}
+/* efficiency section */
+.task-row{border:1px solid #eee;border-radius:8px;overflow:hidden;margin-bottom:.4rem}
+.task-head{display:flex;align-items:center;gap:10px;padding:.6rem .85rem;background:#fff;cursor:pointer}
+.task-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.task-name{flex:1;font-size:13px;font-weight:500}
+.task-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.task-tokens{font-size:11px;color:#888}
+.tbar-bg{height:5px;background:#f0efe9;border-radius:3px;width:80px}
+.tbar{height:5px;border-radius:3px}
+.task-body{padding:.65rem .85rem .8rem;background:#fafaf8;border-top:1px solid #f0efe9;display:none;font-size:12px;color:#555;line-height:1.6}
+.task-body.open{display:block}
+.task-why{color:#888;font-style:italic;margin-bottom:.5rem}
+.tip{margin-bottom:.25rem}.tip:last-child{margin-bottom:0}
+.tip::before{content:'→ ';color:#9ca3af}
+/* savings */
+.savings-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:.75rem}
+.scard{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.75rem .9rem}
+.scard-lbl{font-size:11px;color:#166534;margin-bottom:.15rem}
+.scard-val{font-size:18px;font-weight:600;color:#15803d}
+.scard-unit{font-size:10px;color:#4ade80;margin-top:.1rem}
+/* footer */
+.footer{font-size:11px;color:#ccc;line-height:1.8;margin-top:1rem;padding-top:.75rem;border-top:1px solid #eee}
+.footer a{color:#aaa;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<h1>How much does your AI use cost the planet?</h1>
+<p class="sub">Estimates built from published research. Every number is sourced — expand any section to see the math.</p>
+
+<div class="card">
+  <div class="card-title">Your usage</div>
+  <div class="slider-row">
+    <label>Monthly AI spend ($)</label>
+    <input type="range" id="cost" min="1" max="450" value="20" step="1">
+    <span class="sv" id="costOut">$20</span>
+  </div>
+  <p class="spend-hint">
+    1. To find your actual spend: in Claude, go to <strong>Settings → Usage</strong>.<br>
+    2. Use your total monthly charge (API or Pro plan) as your input above.
+  </p>
+  <div class="slider-row">
+    <label>Active days per month</label>
+    <input type="range" id="days" min="1" max="31" value="22" step="1">
+    <span class="sv" id="daysOut">22 days</span>
+  </div>
+  <div class="slider-row">
+    <label>Model tier</label>
+    <select id="model">
+      <option value="6.5">Claude Sonnet (~$6.50/M tokens)</option>
+      <option value="22">Claude Opus (~$22/M tokens)</option>
+      <option value="1">Claude Haiku (~$1/M tokens)</option>
+    </select>
+  </div>
+  <details>
+    <summary>How we estimate tokens from cost</summary>
+    <div class="cb">
+      <p><strong>Formula:</strong> Monthly cost ÷ blended price per million tokens = tokens used.</p>
+      <p><strong>Blended price</strong> uses a 70% input / 30% output split. Input tokens (what you send) are cheaper than output tokens (what Claude responds with). Sonnet: $3/M input, $15/M output → ~$6.50/M blended. Opus: ~$22/M. Haiku: ~$1/M.</p>
+      <p>Source: <a href="https://www.anthropic.com/pricing" target="_blank">Anthropic pricing page</a>. Output tokens cost ~5× more than input — response length has an outsized impact on both cost and energy.</p>
+    </div>
+  </details>
+</div>
+
+<div class="banner hidden" id="banner">
+  <strong id="bannerTitle">&nbsp;</strong>
+  <span id="bannerText">&nbsp;</span>
+</div>
+
+<!-- TOTAL SUMMARY -->
+<div class="card">
+  <div class="card-title">Your total monthly footprint</div>
+  <p style="font-size:12px;color:#999;line-height:1.6;margin-bottom:.85rem">Combines three layers: <strong>inference</strong> (the energy to run your prompts right now), <strong>training share</strong> (your slice of the one-time cost to build the model, amortized across all queries ever made), and <strong>hardware carbon</strong> (your share of manufacturing the GPUs). Expand "Break down by layer" below to see each separately.</p>
+  <div class="summary-grid">
+    <div class="smcard"><div class="smcard-label">CO₂ emissions</div><div class="smcard-val" id="totCO2">—</div><div class="smcard-unit">grams CO₂e</div></div>
+    <div class="smcard"><div class="smcard-label">Water usage</div><div class="smcard-val" id="totW">—</div><div class="smcard-unit">liters total</div></div>
+    <div class="smcard"><div class="smcard-label">Energy consumed</div><div class="smcard-val" id="totE">—</div><div class="smcard-unit">watt-hours</div></div>
+  </div>
+  <div class="sec">CO₂ comparisons</div>
+  <div id="co2Comps"></div>
+  <div class="sec">Water comparisons</div>
+  <div id="wComps"></div>
+  <div class="sec">Energy comparisons</div>
+  <div id="eComps"></div>
+
+  <!-- LAYER BREAKDOWN TOGGLE -->
+  <div class="tier-toggle" onclick="toggleTier()">
+    <span class="tier-arrow" id="tierArrow">▶</span>
+    <span>Break down by layer (inference / training / hardware)</span>
+  </div>
+  <div class="tier-breakdown" id="tierBreakdown">
+    <div class="tier-tabs">
+      <button class="ttab active t1" id="tab1" onclick="setTier(1)">Inference only<br><span style="font-weight:400">Running your prompts</span></button>
+      <button class="ttab t2" id="tab2" onclick="setTier(2)">+ Training share<br><span style="font-weight:400">Your slice of model training</span></button>
+      <button class="ttab t3" id="tab3" onclick="setTier(3)">+ Hardware carbon<br><span style="font-weight:400">GPU manufacturing cost</span></button>
+    </div>
+    <div class="tdesc" id="tdesc"></div>
+    <div class="sec">CO₂ by tier</div>
+    <div class="mg3">
+      <div class="mcard"><div class="mcard-lbl">This month</div><div class="mcard-val" id="tco2M">—</div><div class="mcard-unit">grams CO₂e</div></div>
+      <div class="mcard"><div class="mcard-lbl">Per active day</div><div class="mcard-val" id="tco2D">—</div><div class="mcard-unit">g CO₂e/day</div></div>
+      <div class="mcard"><div class="mcard-lbl">Annualized</div><div class="mcard-val" id="tco2Y">—</div><div class="mcard-unit">grams CO₂e</div></div>
+    </div>
+    <details>
+      <summary>How we calculated CO₂</summary>
+      <div class="cb">
+        <p><strong>Step 1 — Tokens to energy:</strong> Each token requires GPU compute. We use <strong>0.39 joules per token</strong>, measured on NVIDIA H100 GPUs running vLLM with FP8 quantization at batch size 128. Source: <a href="https://llm-tracker.info/_TOORG/Power-Usage-and-Energy-Efficiency" target="_blank">llm-tracker.info — Lin 2025</a>.</p>
+        <p><strong>Step 2 — Facility overhead (Power Usage Effectiveness / PUE):</strong> PUE is the ratio of total data center energy to IT equipment energy. A PUE of 1.2 means 20% overhead for cooling, lighting, and power distribution. We multiply raw compute energy × 1.2. Source: <a href="https://arxiv.org/html/2505.09598v1" target="_blank">arXiv — "How Hungry is AI?" 2025</a>.</p>
+        <p><strong>Step 3 — Energy to CO₂:</strong> Total kWh × <strong>650g CO₂/kWh</strong>. This reflects Indiana's grid (AWS Project Rainier's location): 42% coal, 35% gas — one of the dirtiest grids in the US, significantly above the national average of 386g/kWh. Sources: <a href="https://www.eia.gov/state/?sid=IN" target="_blank">EIA Indiana 2024</a>; <a href="https://lowcarbonpower.org/region/Indiana" target="_blank">lowcarbonpower.org</a>.</p>
+        <p><strong>Tier 2 — amortized training:</strong> Training is a one-time event shared across all queries ever made. We estimate GPT-4-scale training at ~14,000 metric tons CO₂e and divide by 5 billion estimated queries. Source: <a href="https://towardsdatascience.com/the-carbon-footprint-of-gpt-4-d6c676eb21ae" target="_blank">Towards Data Science 2023</a>.</p>
+        <p><strong>Tier 3 — embodied hardware:</strong> Manufacturing a single A100 GPU emits ~150 kg CO₂e. Amortized over an estimated 100M-query lifespan per GPU. Source: <a href="https://www.nature.com/articles/s41598-024-54271-x" target="_blank">Nature Scientific Reports 2024</a>.</p>
+      </div>
+    </details>
+    <div class="sec">Water by tier</div>
+    <div class="mg3">
+      <div class="mcard"><div class="mcard-lbl">Total</div><div class="mcard-val" id="twTot">—</div><div class="mcard-unit">liters</div></div>
+      <div class="mcard"><div class="mcard-lbl">On-site cooling</div><div class="mcard-val" id="twOn">—</div><div class="mcard-unit">liters</div></div>
+      <div class="mcard"><div class="mcard-lbl">Power plant water</div><div class="mcard-val" id="twUp">—</div><div class="mcard-unit">liters</div></div>
+    </div>
+    <details>
+      <summary>How we calculated water</summary>
+      <div class="cb">
+        <p><strong>On-site (Scope 1):</strong> Evaporative cooling towers at the data center. AWS self-reports a global Water Usage Effectiveness (WUE) of <strong>0.15 liters per kWh</strong> in 2024 — a 40% improvement since 2021 and about 12× better than the industry average of 1.8 L/kWh. This is genuinely low: AWS uses air-side economization and direct evaporative cooling optimized for efficiency. Source: <a href="https://sustainability.aboutamazon.com/products-services/aws-cloud" target="_blank">Amazon Sustainability Report 2024</a>.</p>
+        <p><strong>Power plant water (Scope 2):</strong> Coal and gas plants require water for steam and cooling. Indiana's fossil-heavy grid uses roughly <strong>2–3 liters per kWh</strong> at the power plant. We use 2.5 L/kWh. This upstream figure is about 17× larger than the on-site cooling number — the real water story is in the power grid, not the data center. Source: <a href="https://www.sciencedirect.com/science/article/pii/S0959652625018785" target="_blank">ScienceDirect 2025</a>; corroborated by <a href="https://www.eesi.org/articles/view/data-centers-and-water-consumption" target="_blank">EESI (Lawrence Berkeley Lab 2024)</a>.</p>
+        <p>This water evaporates — it's not contaminated, but it leaves the local watershed. The IEA estimates 60% of data center water consumption comes from this indirect upstream use. For context: UC Riverside estimated ~519 mL per 100-word AI prompt. Source: <a href="https://www.eesi.org/articles/view/data-centers-and-water-consumption" target="_blank">EESI</a>.</p>
+      </div>
+    </details>
+    <div class="sec">Energy by tier</div>
+    <div class="mg3">
+      <div class="mcard"><div class="mcard-lbl">Total (with overhead)</div><div class="mcard-val" id="teWh">—</div><div class="mcard-unit">watt-hours</div></div>
+      <div class="mcard"><div class="mcard-lbl">Raw compute</div><div class="mcard-val" id="teRaw">—</div><div class="mcard-unit">watt-hours</div></div>
+      <div class="mcard"><div class="mcard-lbl">Per active day</div><div class="mcard-val" id="teDay">—</div><div class="mcard-unit">Wh/day</div></div>
+    </div>
+    <details>
+      <summary>How we calculated energy</summary>
+      <div class="cb">
+        <p><strong>Token energy:</strong> When Claude processes your prompt, graphics processing units (GPUs) draw power. We use <strong>0.39 joules per token</strong> — measured directly on NVIDIA H100 hardware running the vLLM serving framework with FP8 quantization (a compression technique that cuts memory use with minimal quality loss) at batch size 128 simultaneous requests. This is ~120× more efficient than early GPT-3 era estimates due to better hardware and software. Source: <a href="https://llm-tracker.info/_TOORG/Power-Usage-and-Energy-Efficiency" target="_blank">llm-tracker.info, Lin 2025</a>.</p>
+        <p><strong>Converting to watt-hours:</strong> A joule is a very small energy unit — 3,600 joules = 1 watt-hour. So: (tokens × 0.39) ÷ 3,600 = raw watt-hours of compute.</p>
+        <p><strong>Facility overhead (PUE 1.2):</strong> Power Usage Effectiveness (PUE) accounts for all the energy a data center uses beyond the servers themselves — cooling systems, power distribution units, backup generators, networking, and lighting. PUE 1.2 means 20 cents of overhead for every $1 of compute. Raw Wh × 1.2 = total facility energy.</p>
+        <p><strong>Trainium2 caveat:</strong> Anthropic's Project Rainier runs AWS Trainium2 chips, not H100s. AWS claims 30–40% better price-performance for Trainium2, which may mean lower energy per token — but this is not publicly benchmarked, so we use H100 as the closest available proxy. Source: <a href="https://siliconangle.com/2025/10/29/aws-opens-11b-project-rainier-data-center-campus-built-anthropic/" target="_blank">SiliconAngle — Project Rainier</a>.</p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- CHATGPT COMPARISON -->
+<div class="card">
+  <div class="card-title">How does this compare to ChatGPT?</div>
+  <p style="font-size:12px;color:#888;line-height:1.6;margin-bottom:.85rem">ChatGPT doesn't show you your usage. OpenAI has never published a sustainability report or per-token emissions data. The only official figure: CEO Sam Altman disclosed in June 2025 that the average ChatGPT query uses <strong>0.34 watt-hours</strong>. Everything else is estimated from infrastructure analysis. <a href="https://www.holdfastprojects.com/chat-carbon-emissions" target="_blank" style="color:#888">Source: holdfastprojects.com citing Altman, June 2025</a>.</p>
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th class="col-metric"></th>
+        <th class="col-claude">🟠 Claude</th>
+        <th class="col-gpt">🟢 ChatGPT (est.)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-metric">CO₂ / month</td><td class="col-claude" id="cmpCO2C">—</td><td class="col-gpt"><span id="cmpCO2G">—</span><span class="est">same tokens, different grid</span></td></tr>
+      <tr><td class="col-metric">🚗 Miles driven equiv.</td><td class="col-claude" id="cmpMiC">—</td><td class="col-gpt"><span id="cmpMiG">—</span></td></tr>
+      <tr><td class="col-metric">🌳 Trees to offset (annual)</td><td class="col-claude" id="cmpTrC">—</td><td class="col-gpt"><span id="cmpTrG">—</span></td></tr>
+      <tr><td class="col-metric">Water / month</td><td class="col-claude" id="cmpWC">—</td><td class="col-gpt"><span id="cmpWG">—</span></td></tr>
+      <tr><td class="col-metric">🚿 Shower mins equiv.</td><td class="col-claude" id="cmpShC">—</td><td class="col-gpt"><span id="cmpShG">—</span></td></tr>
+      <tr><td class="col-metric">Energy / month</td><td class="col-claude" id="cmpEC">—</td><td class="col-gpt"><span id="cmpEG">—</span></td></tr>
+      <tr><td class="col-metric">💻 Laptop days equiv.</td><td class="col-claude" id="cmpLpC">—</td><td class="col-gpt"><span id="cmpLpG">—</span></td></tr>
+      <tr><td class="col-metric">Grid</td><td class="col-claude" style="font-size:11px;font-weight:400">Indiana (coal-heavy)</td><td class="col-gpt" style="font-size:11px;font-weight:400">Azure (mixed)</td></tr>
+      <tr><td class="col-metric">Transparency</td><td class="col-claude" style="color:#dc2626;font-size:11px">None published</td><td class="col-gpt" style="color:#dc2626;font-size:11px">None published</td></tr>
+    </tbody>
+  </table>
+  <details style="margin-top:.75rem">
+    <summary>How we estimated ChatGPT's numbers — and why this is hard</summary>
+    <div class="cb">
+      <p><strong>Starting point — your Claude tokens:</strong> We calculate how many tokens you use in Claude from your monthly spend (spend ÷ blended price per million tokens). The ChatGPT column answers: <em>if you sent that same volume of tokens through ChatGPT instead, what would the environmental cost be?</em> This is a like-for-like token comparison, not a spend comparison.</p>
+      <p><strong>The only disclosed figure:</strong> Sam Altman stated in June 2025 that a ChatGPT query averages <strong>0.34 Wh</strong>. We use this as the energy-per-query baseline. Source: <a href="https://www.holdfastprojects.com/chat-carbon-emissions" target="_blank">holdfastprojects.com</a>.</p>
+      <p><strong>Translating to tokens:</strong> We assume an average ChatGPT query = ~500 tokens, giving ~2.4 J/token — significantly higher than the H100 figure used for Claude (0.39 J/token), likely because GPT-4-class models are larger. We apply this rate to your Claude token count to estimate equivalent ChatGPT energy.</p>
+      <p><strong>CO₂:</strong> Azure's grid mix is cleaner than Indiana's. We use <strong>400g CO₂/kWh</strong> — between the US average (386g) and Indiana (650g). Microsoft reports WUE of 0.30 L/kWh. Source: <a href="https://earth911.com/business-policy/your-ai-carbon-footprint-what-every-query-really-costs/" target="_blank">Earth911 AI carbon footprint guide 2026</a>.</p>
+      <p><strong>Why these estimates are unreliable:</strong> Published estimates for ChatGPT's CO₂ per query range from 0.15g to 68g — a 450× spread. Google is the only major AI company to publish verified per-query data (Gemini: 0.24 Wh, 0.03g CO₂ per query, August 2025). Source: <a href="https://www.cnaught.com/blog/how-much-carbon-does-ai-actually-use-and-why-its-so-hard-to-find-out" target="_blank">cnaught.com 2026</a>.</p>
+    </div>
+    <div class="confbox">
+      <strong>Plausible range for ChatGPT CO₂ estimate</strong>
+      <div style="margin:.4rem 0;font-size:11px">Based on the 450× spread in published estimates, the ChatGPT figure shown could realistically be:</div>
+      <div class="cbbar-wrap"><div class="cbbar-fill" id="gptConfBar" style="width:50%"></div></div>
+      <div class="cblabels"><span>0.15× (cleaner grid, efficient model)</span><span>3× (dirty grid, large model)</span></div>
+      <div style="margin-top:.5rem;font-size:11px">Shown value: <strong id="gptConfVal">—</strong> · Low end: <strong id="gptConfLow">—</strong> · High end: <strong id="gptConfHigh">—</strong><br>ChatGPT Plus is a flat subscription — we cannot derive actual token usage from spend. Treat as directional only.</div>
+    </div>
+  </details>
+</div>
+
+<!-- FUTURE TRAINING -->
+<div class="card">
+  <div class="card-title">Your share of future model training <span class="badge bspec">speculative</span></div>
+  <p style="font-size:13px;color:#555;line-height:1.6;margin-bottom:.85rem">Your spend generates revenue that funds training the next Claude. <a href="https://datacenter.news/story/aws-s-11bn-indiana-data-centre-powers-anthropic-s-ai-growth" target="_blank" style="color:#555">AWS Project Rainier</a> — Anthropic's $11B Indiana campus — will draw <strong>2.2 gigawatts</strong> at full build-out. Indiana's grid is 42% coal.</p>
+  <div class="mg2">
+    <div class="mcard"><div class="mcard-lbl">Low estimate</div><div class="mcard-val" id="trL">—</div><div class="mcard-unit">grams CO₂e/month</div></div>
+    <div class="mcard"><div class="mcard-lbl">High estimate</div><div class="mcard-val" id="trH">—</div><div class="mcard-unit">grams CO₂e/month</div></div>
+  </div>
+  <p style="font-size:11px;color:#aaa;margin-bottom:.6rem" id="trContext"></p>
+  <details>
+    <summary>How we calculated this (read before citing)</summary>
+    <div class="cb">
+      <p><strong>Step 1:</strong> Anthropic 2025 revenue ~$7B. Source: <a href="https://www.cnbc.com/2025/11/12/anthropic-ai-data-centers-texas-new-york.html" target="_blank">CNBC Nov 2025</a>.</p>
+      <p><strong>Step 2:</strong> Frontier AI labs spend an estimated 5–10% of revenue on training compute = $350M–$700M/year. Industry estimate, not disclosed.</p>
+      <p><strong>Step 3:</strong> At ~$3/GPU-hour market rate, that's 120M–230M GPU-hours/year of training.</p>
+      <p><strong>Step 4:</strong> An A100 GPU draws ~400 watts. One GPU-hour = 0.4 kWh.</p>
+      <p><strong>Step 5:</strong> Total training kWh × 650g CO₂/kWh (Indiana) = annual training CO₂. Your share = your monthly spend ÷ ($7B ÷ 12).</p>
+    </div>
+    <div class="confbox">
+      <strong>Confidence: Low</strong>
+      <div class="cbbar-wrap"><div class="cbbar-fill" style="width:25%"></div></div>
+      <div class="cblabels"><span>very uncertain</span><span>well established</span></div>
+      <div style="margin-top:.4rem;font-size:11px">
+        <strong>What's reasonably solid:</strong> Indiana grid intensity, GPU energy/hour, Anthropic revenue.<br>
+        <strong>What's estimated:</strong> Training spend as % of revenue (industry norm, not Anthropic's actual figure). GPU-hour pricing (market rate, not their negotiated rate). Whether Trainium2 changes the energy math significantly.<br>
+        <strong>Honest range:</strong> Could plausibly be 3× lower or 5× higher. Use as an order-of-magnitude signal, not an accounting figure.
+      </div>
+    </div>
+  </details>
+</div>
+
+<!-- EFFICIENCY -->
+<div class="card" id="efficiency">
+  <div class="card-title">Use AI more efficiently — and what it saves</div>
+  <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:.85rem">Not all AI tasks are equal. Ranked from most to least token-intensive. Click any row to see tips and what following them would actually save. Sources: <a href="https://redis.io/blog/llm-token-optimization-speed-up-apps/" target="_blank" style="color:#888">Redis 2026</a>; <a href="https://www.ddaverse.com/llm-token-counter" target="_blank" style="color:#888">DDaverse token research</a>; <a href="https://medium.com/@ravityuval/how-i-reduced-llm-token-costs-by-90-using-prompt-rag-and-ai-agent-optimization-f64bd1b56d9f" target="_blank" style="color:#888">Ben-Itzhak 2026</a>; <a href="https://ditchcarbon.com/blog/llm-carbon-emissions" target="_blank" style="color:#888">DitchCarbon LLM guide</a>.</p>
+  <div id="taskList"></div>
+
+  <div class="sec" style="margin-top:1.1rem">Potential impact if you follow these tips</div>
+  <p style="font-size:12px;color:#888;margin-bottom:.5rem">Studies show that prompt optimization alone can reduce token usage by <strong>60–80%</strong> for typical workflows (<a href="https://redis.io/blog/llm-token-optimization-speed-up-apps/" target="_blank" style="color:#888">Redis 2026</a>). Here's what a conservative 50% reduction would save you per month:</p>
+  <div class="savings-grid">
+    <div class="scard"><div class="scard-lbl">CO₂ saved</div><div class="scard-val" id="saveCO2">—</div><div class="scard-unit">grams CO₂e</div></div>
+    <div class="scard"><div class="scard-lbl">Water saved</div><div class="scard-val" id="saveW">—</div><div class="scard-unit">liters</div></div>
+    <div class="scard"><div class="scard-lbl">Money saved</div><div class="scard-val" id="saveMoney">—</div><div class="scard-unit">per month</div></div>
+    <div class="scard"><div class="scard-lbl">Equivalent to</div><div class="scard-val" id="saveMiles">—</div><div class="scard-unit">fewer miles driven</div></div>
+  </div>
+  <p style="font-size:11px;color:#bbb;margin-top:.5rem">Savings estimate assumes 50% token reduction — conservative relative to reported 60–80% in production environments. Your actual savings depend on how often you do token-heavy tasks.</p>
+</div>
+
+<div class="footer">
+  <strong style="color:#aaa">Sources</strong><br>
+  <a href="https://www.eia.gov/state/?sid=IN" target="_blank">EIA Indiana electricity profile 2024</a> ·
+  <a href="https://llm-tracker.info/_TOORG/Power-Usage-and-Energy-Efficiency" target="_blank">llm-tracker.info — Lin 2025 (0.39 J/token H100)</a> ·
+  <a href="https://arxiv.org/html/2505.09598v1" target="_blank">arXiv "How Hungry is AI?" 2025 — PUE/WUE</a> ·
+  <a href="https://www.datacenterknowledge.com/cooling/a-guide-to-data-center-water-usage-effectiveness-wue-and-best-practices" target="_blank">Data Center Knowledge — AWS WUE 0.19 L/kWh</a> ·
+  <a href="https://www.sciencedirect.com/science/article/pii/S0959652625018785" target="_blank">ScienceDirect 2025 — upstream water 2–3 L/kWh</a> ·
+  <a href="https://www.nature.com/articles/s41598-024-54271-x" target="_blank">Nature Scientific Reports 2024 — GPU embodied carbon</a> ·
+  <a href="https://towardsdatascience.com/the-carbon-footprint-of-gpt-4-d6c676eb21ae" target="_blank">Towards Data Science 2023 — GPT-4 training CO₂</a> ·
+  <a href="https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator-calculations-and-references" target="_blank">EPA GHG Equivalencies — 404g CO₂/mile</a> ·
+  <a href="https://www.usgs.gov/special-topics/water-science-school/science/water-qa-how-much-water-do-i-use-home-each-day" target="_blank">USGS — 7.9 L/min shower</a> ·
+  <a href="https://earth911.com/business-policy/your-ai-carbon-footprint-what-every-query-really-costs/" target="_blank">Earth911 AI footprint 2026</a> ·
+  <a href="https://www.designwhine.com/ai-carbon-footprint/" target="_blank">DesignWhine — estimates vary 175× (2025)</a> ·
+  <a href="https://www.cnaught.com/blog/how-much-carbon-does-ai-actually-use-and-why-its-so-hard-to-find-out" target="_blank">cnaught.com — Google only company with verified data (2026)</a> ·
+  <a href="https://www.anthropic.com/pricing" target="_blank">Anthropic pricing</a> ·
+  All figures are estimates. Anthropic and OpenAI have not published sustainability reports or per-token emissions data as of April 2026.
+</div>
+
+<script>
+const GRID=650,PUE=1.2,WUE_ON=0.15,WUE_UP=2.5;
+const EPA_MPG=404,HOME_CO2_HR=1.2*386,SHOWER_LPM=7.9,DRINK_LPD=2;
+const ANN_Q=5e9,TRAIN_G=14000*1e6,GPU_LIFE=1e8,GPU_HW_G=150000;
+const GPT_J_PER_TOK=2.4,GPT_GRID=400,GPT_WUE_ON=0.30,GPT_WUE_UP=2.0;
+let tier=1,tierOpen=false;
+
+function f(n){
+  if(isNaN(n)||!isFinite(n))return'—';
+  if(n>=1000)return Math.round(n).toLocaleString();
+  if(n>=10)return n.toFixed(1);
+  return n.toFixed(2);
+}
+function fL(n){
+  if(isNaN(n)||!isFinite(n))return'—';
+  return n<1?(n*1000).toFixed(0)+'mL':n.toFixed(2)+'L';
+}
+function safe(n){return isNaN(n)||!isFinite(n)?0:n;}
+
+function calc(cost,blend,days){
+  const tokens=safe(cost/blend*1e6);
+  const q=tokens/500;
+  const rawWh=tokens*0.39/3600;
+  const totWh=rawWh*PUE;
+  const totKwh=totWh/1000;
+  const co2inf=totKwh*GRID;
+  const co2tr=TRAIN_G/ANN_Q*q;
+  const co2hw=GPU_HW_G/GPU_LIFE*q;
+  const co2=[co2inf,co2inf+co2tr,co2inf+co2tr+co2hw];
+  const wOn=totKwh*WUE_ON*1000;
+  const wUp=totKwh*WUE_UP*1000;
+  const wTot=wOn+wUp;
+  return{tokens,q,rawWh,totWh,totKwh,co2,wOn,wUp,wTot,days};
+}
+
+function compItem(icon,head,sub,alarm,calcHtml){
+  return`<div class="ci"><div class="ci-icon">${icon}</div><div class="ci-body">
+    <div class="ci-head">${head}</div>
+    <div class="ci-sub">${sub}</div>
+    ${alarm?`<div class="ci-alarm">${alarm}`+`</div>`:''}
+    <details><summary>How we got this number</summary><div class="cb">${calcHtml}</div></details>
+  </div></div>`;
+}
+
+function update(){
+  const cost=+document.getElementById('cost').value;
+  const days=+document.getElementById('days').value;
+  const blend=+document.getElementById('model').value;
+  document.getElementById('costOut').textContent='$'+cost;
+  document.getElementById('daysOut').textContent=days+' days';
+
+  const d=calc(cost,blend,days);
+  const co2tot=d.co2[2];
+  const wTot=d.wTot;
+  const totWh=d.totWh;
+
+  // summary
+  document.getElementById('totCO2').textContent=f(co2tot);
+  document.getElementById('totW').textContent=fL(wTot/1000);
+  document.getElementById('totE').textContent=f(totWh);
+
+  // tier metrics
+  const co2t=d.co2[tier-1];
+  document.getElementById('tco2M').textContent=f(co2t);
+  document.getElementById('tco2D').textContent=f(co2t/days);
+  document.getElementById('tco2Y').textContent=f(co2t*12);
+  document.getElementById('teWh').textContent=f(totWh);
+  document.getElementById('teRaw').textContent=f(d.rawWh);
+  document.getElementById('teDay').textContent=f(totWh/days);
+  document.getElementById('twTot').textContent=fL(wTot/1000);
+  document.getElementById('twOn').textContent=fL(d.wOn/1000);
+  document.getElementById('twUp').textContent=fL(d.wUp/1000);
+
+  // comparisons using total
+  const miles=safe(co2tot/EPA_MPG);
+  const homeHrs=safe(co2tot/HOME_CO2_HR);
+  const shMin=safe(wTot/1000/SHOWER_LPM);
+  const drDays=safe(wTot/1000/DRINK_LPD);
+  const tvHrs=safe(totWh/0.1);
+  const lapHrs=safe(totWh/0.045);
+
+  const trees=safe(co2tot*12/21000);
+  document.getElementById('co2Comps').innerHTML=
+    compItem('🚗',`Equals driving <strong>${f(miles)} miles</strong> in a gas car`,
+      `EPA standard: ${EPA_MPG}g CO₂/mile for an average gasoline vehicle.`,
+      miles>50?`At this pace, your annual AI footprint equals ${f(miles*12)} miles driven — more than half a cross-country trip.`:null,
+      `${f(co2tot)}g CO₂ ÷ <a href="https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator-calculations-and-references" target="_blank">EPA figure of ${EPA_MPG}g CO₂ per mile</a> = ${f(miles)} miles.`)+
+    compItem('💡',`Powers a home for <strong>${f(homeHrs)} hours</strong>`,
+      `Average US home: 1.2 kWh/hour at 386g CO₂/kWh (US average grid) = ${Math.round(HOME_CO2_HR)}g CO₂/hour.`,
+      homeHrs>24?`That exceeds a full day of home energy — from a month of AI prompts.`:null,
+      `${f(co2tot)}g ÷ ${Math.round(HOME_CO2_HR)}g/home-hour = ${f(homeHrs)} hours. Source: <a href="https://www.eia.gov/energyexplained/use-of-energy/homes.php" target="_blank">EIA residential energy 2023</a>, <a href="https://www.epa.gov/egrid" target="_blank">EPA eGRID</a>.`)+
+    compItem('🌳',`Needs <strong>${f(trees)} trees</strong> growing for a year to offset`,
+      `A mature tree absorbs ~21 kg CO₂/year. Your annualized AI footprint (${f(co2tot*12/1000)} kg CO₂) would require ${f(trees)} trees to offset.`,
+      trees>1?`That's a small grove — just for one person's AI use.`:null,
+      `${f(co2tot*12/1000)} kg CO₂/year ÷ 21 kg/tree/year = ${f(trees)} trees. Source: <a href="https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator-calculations-and-references" target="_blank">EPA GHG Equivalencies</a>.`);
+
+  document.getElementById('wComps').innerHTML=
+    compItem('🚿',`Equals <strong>${f(shMin)} minutes</strong> of showering`,
+      `USGS average US showerhead: 7.9 L/min. Your AI water (on-site cooling + coal plant water) equals ${f(shMin)} shower minutes.`,
+      shMin>8?`Most of this is invisible "upstream" water at power plants — not the data center itself.`:null,
+      `${fL(wTot/1000)} ÷ <a href="https://www.usgs.gov/special-topics/water-science-school/science/water-qa-how-much-water-do-i-use-home-each-day" target="_blank">7.9 L/min (USGS)</a> = ${f(shMin)} min. Includes AWS on-site cooling (0.19 L/kWh) + Indiana coal plant water (2.5 L/kWh, <a href="https://www.sciencedirect.com/science/article/pii/S0959652625018785" target="_blank">ScienceDirect 2025</a>).`)+
+    compItem('💧',`Equals <strong>${f(drDays)} days</strong> of drinking water`,
+      `WHO recommends 2 liters/day. Your AI water = ${f(drDays)} days of drinking water — mostly from coal plant cooling, not the server room.`,
+      drDays>3?`This water evaporates and leaves the local watershed permanently.`:null,
+      `${fL(wTot/1000)} ÷ <a href="https://www.who.int/water_sanitation_health/dwq/en/watreatment.pdf" target="_blank">2 L/day (WHO)</a> = ${f(drDays)} days. Upstream power-plant figure (${fL(d.wUp/1000)}) dominates because Indiana coal plants use 2–3 L per kWh generated.`);
+
+  document.getElementById('eComps').innerHTML=
+    compItem('📺',`Powers a TV for <strong>${f(tvHrs)} hours</strong>`,
+      `A modern LED TV draws ~100 watts. Your monthly compute = ${f(tvHrs)} hours of TV.`,null,
+      `${f(totWh)} Wh ÷ 100W (<a href="https://www.energystar.gov/products/televisions" target="_blank">EnergyStar LED TV average</a>) = ${f(tvHrs)} hours.`)+
+    compItem('💻',`Powers a laptop for <strong>${f(totWh/0.045/24)} days</strong>`,
+      `A typical laptop draws ~45 watts. Your AI energy = ${f(totWh/0.045/24)} days of continuous laptop use.`,
+      totWh/0.045/24>3?`Over ${f(totWh/0.045/24)} full days of laptop runtime — from just your AI prompts.`:null,
+      `${f(totWh)} Wh ÷ 45W (typical mid-range laptop TDP) ÷ 24h = ${f(totWh/0.045/24)} days. Source: <a href="https://www.eia.gov/energyexplained/use-of-energy/homes.php" target="_blank">EIA consumer electronics data</a>.`);
+
+  // ChatGPT comparison
+  const gptWh=safe(d.tokens*GPT_J_PER_TOK/3600*PUE);
+  const gptCO2=safe(gptWh/1000*GPT_GRID);
+  const gptW=safe(gptWh/1000*(GPT_WUE_ON+GPT_WUE_UP)*1000);
+  document.getElementById('cmpCO2C').textContent=f(co2tot)+'g';
+  document.getElementById('cmpWC').textContent=fL(wTot/1000);
+  document.getElementById('cmpEC').textContent=f(totWh)+' Wh';
+  document.getElementById('cmpCO2G').textContent=f(gptCO2)+'g est.';
+  document.getElementById('cmpWG').textContent=fL(gptW/1000)+' est.';
+  document.getElementById('cmpEG').textContent=f(gptWh)+' Wh est.';
+  // context column
+  document.getElementById('cmpMiC').textContent=f(co2tot/EPA_MPG)+' mi';
+  document.getElementById('cmpMiG').textContent=f(gptCO2/EPA_MPG)+' mi est.';
+  document.getElementById('cmpShC').textContent=f(wTot/1000/SHOWER_LPM)+' min';
+  document.getElementById('cmpShG').textContent=f(gptW/1000/SHOWER_LPM)+' min est.';
+  document.getElementById('cmpLpC').textContent=f(totWh/0.045/24)+' days';
+  document.getElementById('cmpLpG').textContent=f(gptWh/0.045/24)+' days est.';
+  const treesC=co2tot*12/21000, treesG=gptCO2*12/21000;
+  document.getElementById('cmpTrC').textContent=treesC<0.01?'<0.01':f(treesC);
+  document.getElementById('cmpTrG').textContent=(treesG<0.01?'<0.01':f(treesG))+' est.';
+  // GPT confidence range
+  document.getElementById('gptConfVal').textContent=f(gptCO2)+'g';
+  document.getElementById('gptConfLow').textContent=f(gptCO2*0.15)+'g';
+  document.getElementById('gptConfHigh').textContent=f(gptCO2*3)+'g';
+
+  // future training
+  const rs=safe(cost/(7e9/12));
+  const trLow=350e6/3*0.4*GRID*1000*rs;
+  const trHigh=700e6/3*0.4*GRID*1000*rs;
+  document.getElementById('trL').textContent=f(trLow);
+  document.getElementById('trH').textContent=f(trHigh);
+  // training context notes
+  const trMid=(trLow+trHigh)/2;
+  document.getElementById('trContext').innerHTML=
+    `🌳 ${f(trMid*12/21000)} trees/yr to offset &nbsp;·&nbsp; 🚿 ${f(safe(trMid/GRID/1000*WUE_UP*1000)/SHOWER_LPM)} shower-mins of water &nbsp;·&nbsp; ⚡ ~${f(safe(trMid/GRID*1000))} Wh energy`;
+
+  // savings (50% reduction)
+  document.getElementById('saveCO2').textContent=f(co2tot*0.5);
+  document.getElementById('saveW').textContent=fL(wTot/1000*0.5);
+  document.getElementById('saveMoney').textContent='$'+f(cost*0.5);
+  document.getElementById('saveMiles').textContent=f(co2tot*0.5/EPA_MPG);
+
+  // banner
+  const bn=document.getElementById('banner');
+  if(co2tot>500){
+    bn.classList.remove('hidden');
+    document.getElementById('bannerTitle').textContent=
+      co2tot>10000?'Your AI footprint is substantial.':
+      co2tot>3000?'Your AI use adds up more than you might think.':'Worth being aware of.';
+    document.getElementById('bannerText').innerHTML=
+      `${f(co2tot)}g CO₂ this month — like driving ${f(miles)} miles. Across a year: ${f(co2tot*12/1000)} kg CO₂. 🌳 ${f(co2tot*12/21000)} trees needed to offset annually. <a href="#efficiency" style="color:#92400e;font-weight:600">See how to reduce it ↓</a>`;
+  } else {
+    bn.classList.add('hidden');
+  }
+
+  updateTierDesc();
+}
+
+const tierDescs=['',
+  'Direct energy cost of processing your prompts. No training history, no manufacturing. Just the servers running right now.',
+  'Adds your proportional share of training Claude — a one-time energy event amortized across every query ever made.',
+  'Adds your share of the carbon from manufacturing the GPUs and servers — ~150 kg CO₂e per A100 GPU, prorated over its working lifetime.'
+];
+
+function updateTierDesc(){document.getElementById('tdesc').textContent=tierDescs[tier];}
+
+function setTier(t){
+  tier=t;
+  ['tab1','tab2','tab3'].forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('active',i+1===t);
+    document.getElementById(id).className=document.getElementById(id).className
+      .replace(/\bt[123]\b/,'')+'t'+(i+1);
+    if(i+1===t)document.getElementById(id).classList.add('active');
+  });
+  update();
+}
+
+function toggleTier(){
+  tierOpen=!tierOpen;
+  document.getElementById('tierBreakdown').classList.toggle('open',tierOpen);
+  document.getElementById('tierArrow').classList.toggle('open',tierOpen);
+}
+
+const tasks=[
+  {icon:'🤖',name:'Multi-step AI agents',tokens:'50,000–100,000+',bar:100,color:'#ef4444',
+   why:'Each reasoning step re-reads the full conversation history. A 10-step agent can process 100k tokens — equivalent to a short novel. Source: Ben-Itzhak 2026.',
+   tips:[
+     'Set a clear goal and stopping condition before starting — open-ended agents loop and re-read context unnecessarily',
+     'Break the task into separate conversations per sub-task, rather than one long chain',
+     'Use Haiku for simple sub-steps (classification, extraction) and Sonnet only for reasoning-heavy steps — this alone can cut costs 6×',
+     'Specify output format upfront so Claude doesn\'t produce verbose exploratory responses before the answer'
+   ]},
+  {icon:'📄',name:'Full document analysis',tokens:'10,000–30,000',bar:75,color:'#f97316',
+   why:'Pasting an entire PDF into the context window is the single biggest token spike most users create. A 20-page report can be 8,000–15,000 tokens of input alone.',
+   tips:[
+     'Paste only the relevant sections — describe the rest in a sentence ("the rest of the document covers X, which is not relevant")',
+     'Ask Claude to focus on specific pages or sections: "Look only at section 3 and the conclusion"',
+     'Can Claude ignore parts of an uploaded document? Not automatically — but you can instruct it: "Ignore everything before the Executive Summary" or "Focus only on the data tables". Claude will deprioritize the rest, though it still processes the full context',
+     'For recurring document types, write a reusable prompt template so you\'re not re-explaining context each session',
+     'Summarize the document yourself first, then ask specific questions about your summary — often more accurate and far cheaper'
+   ]},
+  {icon:'💬',name:'Long multi-turn conversations',tokens:'5,000–15,000',bar:60,color:'#eab308',
+   why:'Every new message includes the entire conversation history. A 20-turn chat can burn 5,000–10,000 tokens in accumulated context — even if your new message is short.',
+   tips:[
+     'How to clear a context window: start a new conversation. There is no "clear history" button within a chat — each conversation is its own context. Starting fresh = zero context overhead',
+     'Start a new chat for each new topic — don\'t keep extending the same thread across days',
+     'Summarize earlier turns yourself: "Here\'s a summary of what we\'ve discussed: [summary]. Now I want to ask about X" — this compresses thousands of tokens into hundreds',
+     'Be direct and specific — pleasantries ("would you be so kind as to...") add tokens with no benefit'
+   ]},
+  {icon:'💻',name:'Code generation with large context',tokens:'4,000–12,000',bar:55,color:'#f59e0b',
+   why:'Code has lower token density than prose — more tokens per character. Sending a 300-line file can easily be 3,000+ input tokens before Claude writes a single word.',
+   tips:[
+     'Send only the relevant function or file, not the entire codebase',
+     'Describe the surrounding architecture in words rather than pasting it: "This function is part of a REST API handler that uses PostgreSQL..."',
+     'Ask for pseudocode or an outline first — approve it before requesting the full implementation to avoid regenerating from scratch',
+     'Paste error messages directly rather than explaining the context at length'
+   ]},
+  {icon:'✍️',name:'Long-form writing / drafting',tokens:'2,000–8,000',bar:45,color:'#84cc16',
+   why:'Output tokens cost ~5× more than input tokens. A 2,000-word essay response can cost as much in tokens as a lengthy back-and-forth conversation.',
+   tips:[
+     'Ask for an outline first and approve it — then request the full draft. This avoids regenerating from scratch if the direction is wrong',
+     'Specify length explicitly: "Write a 300-word summary" — without this, Claude defaults to being thorough',
+     'Use Claude to edit your existing draft rather than generate from zero when you have a starting point',
+     'Ask for the "skeleton" version first: headings and key points only, then expand section by section'
+   ]},
+  {icon:'🔍',name:'Research and synthesis',tokens:'1,500–5,000',bar:35,color:'#22c55e',
+   why:'Open-ended research prompts produce exhaustive responses. Without scope constraints, Claude covers every angle — whether you need it or not.',
+   tips:[
+     'Specify exactly how many points, examples, or words you want: "Give me the top 3 findings, ~200 words each"',
+     'Use follow-up questions to drill down rather than asking for everything upfront in one prompt',
+     'Add "be concise" or "avoid repetition" — Claude responds to explicit length constraints',
+     'When to use Google instead: factual lookups ("what year was X founded"), current news, price checks, specific statistics, anything where the answer is a single known fact. Google uses ~0.3 Wh vs ~0.34 Wh for ChatGPT per query — but more importantly, it\'s the right tool and doesn\'t generate a 500-word response around a 3-word answer'
+   ]},
+  {icon:'💡',name:'Simple Q&A and quick tasks',tokens:'200–800',bar:12,color:'#3b82f6',
+   why:'The most efficient use of AI. Direct questions with direct answers stay well under 1,000 tokens.',
+   tips:[
+     'Use Haiku for factual Q&A — it handles these tasks at 1/6th the cost of Sonnet with similar accuracy',
+     'Keep prompts short and specific — more context isn\'t always better',
+     'Batch related small questions into one message rather than separate conversations',
+     'If it\'s a lookup (a fact, a definition, a current price) — search Google first. AI is better for synthesis, reasoning, and generation'
+   ]},
+];
+
+function buildTasks(){
+  document.getElementById('taskList').innerHTML=tasks.map((t,i)=>`
+    <div class="task-row">
+      <div class="task-head" onclick="toggleTask(${i})">
+        <div class="task-icon">${t.icon}</div>
+        <div class="task-name">${t.name}</div>
+        <div class="task-right">
+          <div class="task-tokens">${t.tokens} tokens</div>
+          <div class="tbar-bg"><div class="tbar" style="width:${t.bar}%;background:${t.color}"></div></div>
+        </div>
+      </div>
+      <div class="task-body" id="tb${i}">
+        <div class="task-why">${t.why}</div>
+        ${t.tips.map(tip=>`<div class="tip">${tip}</div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleTask(i){document.getElementById('tb'+i).classList.toggle('open');}
+
+['cost','days'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+document.getElementById('model').addEventListener('change',update);
+
+function initTabs(){
+  const ids=['tab1','tab2','tab3'];
+  ids.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.classList.remove('t1','t2','t3','active');
+    el.classList.add('t'+(i+1));
+    if(i===0)el.classList.add('active');
+  });
+}
+
+buildTasks();
+initTabs();
+update();
+</script>
+</body>
+</html>
